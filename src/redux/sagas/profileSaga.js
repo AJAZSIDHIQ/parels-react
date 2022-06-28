@@ -3,7 +3,7 @@ import { ACCOUNT } from 'constants/routes';
 import { displayActionMessage } from 'helpers/utils';
 import { call, put, select } from 'redux-saga/effects';
 import { history } from 'routers/AppRouter';
-import firebase from 'services/firebase';
+import services from 'services/services';
 import { setLoading } from '../actions/miscActions';
 import { updateProfileSuccess } from '../actions/profileActions';
 
@@ -12,7 +12,7 @@ function* profileSaga({ type, payload }) {
     case UPDATE_EMAIL: {
       try {
         yield put(setLoading(false));
-        yield call(firebase.updateEmail, payload.password, payload.newEmail);
+        yield call(services.updateEmail, payload.password, payload.newEmail);
 
         yield put(setLoading(false));
         yield call(history.push, '/profile');
@@ -33,18 +33,18 @@ function* profileSaga({ type, payload }) {
         // if email & password exist && the email has been edited
         // update the email
         if (email && password && email !== state.profile.email) {
-          yield call(firebase.updateEmail, password, email);
+          yield call(services.updateEmail, password, email);
         }
 
         if (avatarFile || bannerFile) {
-          const bannerURL = bannerFile ? yield call(firebase.storeImage, state.auth.id, 'banner', bannerFile) : payload.updates.banner;
-          const avatarURL = avatarFile ? yield call(firebase.storeImage, state.auth.id, 'avatar', avatarFile) : payload.updates.avatar;
+          const bannerURL = bannerFile ? yield call(services.storeImage, state.auth.id, 'banner', bannerFile) : payload.updates.banner;
+          const avatarURL = avatarFile ? yield call(services.storeImage, state.auth.id, 'avatar', avatarFile) : payload.updates.avatar;
           const updates = { ...payload.updates, avatar: avatarURL, banner: bannerURL };
 
-          yield call(firebase.updateProfile, state.auth.id, updates);
+          yield call(services.updateProfile, state.auth.id, updates);
           yield put(updateProfileSuccess(updates));
         } else {
-          yield call(firebase.updateProfile, state.auth.id, payload.updates);
+          yield call(services.updateProfile, state.auth.id, payload.updates);
           yield put(updateProfileSuccess(payload.updates));
         }
 

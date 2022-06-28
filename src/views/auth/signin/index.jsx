@@ -5,19 +5,23 @@ import { FORGOT_PASSWORD, SIGNUP } from 'constants/routes';
 import { Field, Form, Formik } from 'formik';
 import { useDocumentTitle, useScrollTop } from 'hooks';
 import PropType from 'prop-types';
-import React, { useEffect } from 'react';
+import React, { useEffect , useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { signIn } from 'redux/actions/authActions';
+import { signIn , validateMobile} from 'redux/actions/authActions';
 import { setAuthenticating, setAuthStatus } from 'redux/actions/miscActions';
 import * as Yup from 'yup';
 
-const SignInSchema = Yup.object().shape({
-  email: Yup.string()
-    .email('Email is not valid.')
-    .required('Email is required.'),
-  password: Yup.string()
-    .required('Password is required.')
+const phoneRegExp = /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/
+
+
+
+const OTPSchema = Yup.object().shape({
+  otp_value: Yup.string()
+    .required()
+    .matches(/^[0-9]+$/, "Must be only digits")
+    .min(5, 'Must be exactly 5 digits')
+    .max(5, 'Must be exactly 5 digits')
 });
 
 const SignIn = ({ history }) => {
@@ -25,6 +29,27 @@ const SignIn = ({ history }) => {
     authStatus: state.app.authStatus,
     isAuthenticating: state.app.isAuthenticating
   }));
+
+  // const [phoneNumber, setPhoneNumber] = useState(null);
+  const [otpInitiated, setOtpInitiated] = useState(false);
+
+  const SignInSchema = Yup.object().shape({
+    phoneNumber: Yup.string()
+      .matches(phoneRegExp , 'phone Number is not valid.')
+      .required('phone Number is required.') ,
+    otp_value: Yup.string()
+      .when("phoneNumber", (phoneNumber) => {
+        if(otpInitiated)
+          return Yup.string().required()
+                  .matches(/^[0-9]+$/, "Must be only digits")
+                  .min(5, 'Must be exactly 5 digits')
+                  .max(5, 'Must be exactly 5 digits')
+        else {
+           return Yup.string()
+        }
+      })
+  });
+
 
   const dispatch = useDispatch();
 
@@ -38,9 +63,22 @@ const SignIn = ({ history }) => {
 
   const onSignUp = () => history.push(SIGNUP);
 
+
   const onSubmitForm = (form) => {
-    dispatch(signIn(form.email, form.password));
+    
+    // setPhoneNumber(form.phoneNumber)
+    if(otpInitiated == false){
+      dispatch(signIn(form.phoneNumber));
+      setOtpInitiated(true)
+    }
+    else{
+      dispatch(validateMobile(form.phoneNumber , form.otp_value));
+    }
   };
+
+  // const validateMobileFromSubmit = (form) => {
+  //   dispatch(validateMobile(phoneNumber , form.otp_value));
+  // }
 
   const onClickLink = (e) => {
     if (isAuthenticating) e.preventDefault();
@@ -70,8 +108,8 @@ const SignIn = ({ history }) => {
               <div className="auth-wrapper">
                 <Formik
                   initialValues={{
-                    email: '',
-                    password: ''
+                    phoneNumber: '',
+                    otp_value :''
                   }}
                   validateOnChange
                   validationSchema={SignInSchema}
@@ -81,24 +119,25 @@ const SignIn = ({ history }) => {
                     <Form>
                       <div className="auth-field">
                         <Field
-                          disabled={isAuthenticating}
-                          name="email"
-                          type="email"
-                          label="Email"
-                          placeholder="test@example.com"
+                          disabled={otpInitiated}
+                          name="phoneNumber"
+                          type="number"
+                          label="phone number"
+                          placeholder="phone number"
                           component={CustomInput}
                         />
                       </div>
+                      {otpInitiated &&
                       <div className="auth-field">
                         <Field
                           disabled={isAuthenticating}
-                          name="password"
-                          type="password"
-                          label="Password"
-                          placeholder="Your Password"
+                          name="otp_value"
+                          type="number"
+                          label="OTP"
+                          placeholder="OTP"
                           component={CustomInput}
                         />
-                      </div>
+                      </div>}
                       <br />
                       <div className="auth-field auth-action">
                         <Link
@@ -120,7 +159,49 @@ const SignIn = ({ history }) => {
                       </div>
                     </Form>
                   )}
-                </Formik>
+                </Formik> 
+                {/* <Formik
+                  initialValues={{
+                    otp_value: ''
+                  }}
+                  validateOnChange
+                  validationSchema={OTPSchema}
+                  onSubmit={validateMobileFromSubmit}
+                >
+                  {() => (
+                    <Form>
+                      <div className="auth-field">
+                        <Field
+                          // disabled={isAuthenticating}
+                          name="otp_value"
+                          type="number"
+                          label="OTP"
+                          placeholder="OTP"
+                          component={CustomInput}
+                        />
+                      </div>
+                      <br />
+                      <div className="auth-field auth-action">
+                        <Link
+                          onClick={onClickLink}
+                          style={{ textDecoration: 'underline' }}
+                          to={FORGOT_PASSWORD}
+                        >
+                          <span>Forgot password?</span>
+                        </Link>
+                        <button
+                          className="button auth-button"
+                          // disabled={isAuthenticating}
+                          type="submit"
+                        >
+                          {isAuthenticating ? 'Signing In' : 'Sign In'}
+                          &nbsp;
+                          {isAuthenticating ? <LoadingOutlined /> : <ArrowRightOutlined />}
+                        </button>
+                      </div>
+                    </Form>
+                  )}
+                </Formik> */}
               </div>
             </div>
             <div className="auth-divider">

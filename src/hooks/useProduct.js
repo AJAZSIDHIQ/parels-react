@@ -1,7 +1,7 @@
 import { useDidMount } from 'hooks';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import firebase from 'services/firebase';
+import services from 'services/services';
 
 const useProduct = (id) => {
   // get and check if product exists in store
@@ -17,7 +17,7 @@ const useProduct = (id) => {
       try {
         if (!product || product.id !== id) {
           setLoading(true);
-          const doc = await firebase.getSingleProduct(id);
+          const doc = await services.getSingleProduct(id);
 
           if (doc.exists) {
             const data = { ...doc.data(), id: doc.ref.id };

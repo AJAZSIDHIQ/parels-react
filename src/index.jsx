@@ -8,7 +8,8 @@ import configureStore from 'redux/store/store';
 import 'styles/style.scss';
 import WebFont from 'webfontloader';
 import App from './App';
-import firebase from './services/firebase';
+import services from './services/services';
+import { makeServer } from "./mirage/";
 
 WebFont.load({
   google: {
@@ -19,18 +20,23 @@ WebFont.load({
 const { store, persistor } = configureStore();
 const root = document.getElementById('app');
 
+const environment = process.env.NODE_ENV;
+if (environment !== "production") {
+  makeServer({ environment });
+}
+
 // Render the preloader on initial load
 render(<Preloader />, root);
 
-firebase.auth.onAuthStateChanged((user) => {
-  if (user) {
-    store.dispatch(onAuthStateSuccess(user));
-  } else {
-    store.dispatch(onAuthStateFail('Failed to authenticate'));
-  }
-  // then render the app after checking the auth state
-  render(<App store={store} persistor={persistor} />, root);
-});
+// services.auth.onAuthStateChanged((user) => {
+//   if (user) {
+//     store.dispatch(onAuthStateSuccess(user));
+//   } else {
+//     store.dispatch(onAuthStateFail('Failed to authenticate'));
+//   }
+//   // then render the app after checking the auth state
+// });
+render(<App store={store} persistor={persistor} />, root);
 
 if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {

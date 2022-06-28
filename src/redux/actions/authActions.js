@@ -1,12 +1,19 @@
 import * as type from 'constants/constants';
 
-export const signIn = (email, password) => ({
+export const signIn = (phoneNumber) => ({
   type: type.SIGNIN,
   payload: {
-    email,
-    password
+    phoneNumber
   }
 });
+
+export const validateMobile = (phoneNumber,otp_value) =>({
+  type :  type.VALIDATE_MOBILE,
+  payload : {
+    phoneNumber,
+    otp_value
+  }
+})
 
 export const signInWithGoogle = () => ({
   type: type.SIGNIN_WITH_GOOGLE

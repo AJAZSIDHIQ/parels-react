@@ -13,7 +13,7 @@ import {
 } from 'redux-saga/effects';
 import { setLoading, setRequestStatus } from 'redux/actions/miscActions';
 import { history } from 'routers/AppRouter';
-import firebase from 'services/firebase';
+import services from 'services/services';
 import {
   addProductSuccess,
   clearSearchState, editProductSuccess, getProductsSuccess,
@@ -43,7 +43,7 @@ function* productSaga({ type, payload }) {
       try {
         yield initRequest();
         const state = yield select();
-        const result = yield call(firebase.getProducts, payload);
+        const result = yield call(services.getProducts, payload);
 
         if (result.products.length === 0) {
           handleError('No items found.');
@@ -68,14 +68,14 @@ function* productSaga({ type, payload }) {
         yield initRequest();
 
         const { imageCollection } = payload;
-        const key = yield call(firebase.generateKey);
-        const downloadURL = yield call(firebase.storeImage, key, 'products', payload.image);
+        const key = yield call(services.generateKey);
+        const downloadURL = yield call(services.storeImage, key, 'products', payload.image);
         const image = { id: key, url: downloadURL };
         let images = [];
 
         if (imageCollection.length !== 0) {
-          const imageKeys = yield all(imageCollection.map(() => firebase.generateKey));
-          const imageUrls = yield all(imageCollection.map((img, i) => firebase.storeImage(imageKeys[i](), 'products', img.file)));
+          const imageKeys = yield all(imageCollection.map(() => services.generateKey));
+          const imageUrls = yield all(imageCollection.map((img, i) => services.storeImage(imageKeys[i](), 'products', img.file)));
           images = imageUrls.map((url, i) => ({
             id: imageKeys[i](),
             url
@@ -88,7 +88,7 @@ function* productSaga({ type, payload }) {
           imageCollection: [image, ...images]
         };
 
-        yield call(firebase.addProduct, key, product);
+        yield call(services.addProduct, key, product);
         yield put(addProductSuccess({
           id: key,
           ...product
@@ -110,12 +110,12 @@ function* productSaga({ type, payload }) {
 
         if (image.constructor === File && typeof image === 'object') {
           try {
-            yield call(firebase.deleteImage, payload.id);
+            yield call(services.deleteImage, payload.id);
           } catch (e) {
             console.error('Failed to delete image ', e);
           }
 
-          const url = yield call(firebase.storeImage, payload.id, 'products', image);
+          const url = yield call(services.storeImage, payload.id, 'products', image);
           newUpdates = { ...newUpdates, image: url };
         }
 
@@ -131,8 +131,8 @@ function* productSaga({ type, payload }) {
             }
           });
 
-          const imageKeys = yield all(newUploads.map(() => firebase.generateKey));
-          const imageUrls = yield all(newUploads.map((img, i) => firebase.storeImage(imageKeys[i](), 'products', img.file)));
+          const imageKeys = yield all(newUploads.map(() => services.generateKey));
+          const imageUrls = yield all(newUploads.map((img, i) => services.storeImage(imageKeys[i](), 'products', img.file)));
           const images = imageUrls.map((url, i) => ({
             id: imageKeys[i](),
             url
@@ -147,7 +147,7 @@ function* productSaga({ type, payload }) {
           // make sure you're adding the url not the file object.
         }
 
-        yield call(firebase.editProduct, payload.id, newUpdates);
+        yield call(services.editProduct, payload.id, newUpdates);
         yield put(editProductSuccess({
           id: payload.id,
           updates: newUpdates
@@ -163,7 +163,7 @@ function* productSaga({ type, payload }) {
     case REMOVE_PRODUCT: {
       try {
         yield initRequest();
-        yield call(firebase.removeProduct, payload);
+        yield call(services.removeProduct, payload);
         yield put(removeProductSuccess(payload));
         yield put(setLoading(false));
         yield handleAction(ADMIN_PRODUCTS, 'Item succesfully removed', 'success');
@@ -180,7 +180,7 @@ function* productSaga({ type, payload }) {
         yield put(clearSearchState());
 
         const state = yield select();
-        const result = yield call(firebase.searchProducts, payload.searchKey);
+        const result = yield call(services.searchProducts, payload.searchKey);
 
         if (result.products.length === 0) {
           yield handleError({ message: 'No product found.' });
