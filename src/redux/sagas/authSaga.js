@@ -64,6 +64,13 @@ function* authSaga({ type, payload }) {
       try {
         yield initRequest();
         yield call(services.validateMobile , payload.phoneNumber , payload.otp_value);
+        yield put(setAuthStatus({
+          success: true,
+          type: 'auth',
+          isError: false,
+          message: 'Successfully signed in. Redirecting...'
+        }));
+        yield put(setAuthenticating(false));
       } catch (e) {
         yield handleError(e);
       }

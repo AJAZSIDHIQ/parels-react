@@ -1,7 +1,7 @@
 import { ArrowRightOutlined, LoadingOutlined } from '@ant-design/icons';
 import { SocialLogin } from 'components/common';
 import { CustomInput } from 'components/formik';
-import { FORGOT_PASSWORD, SIGNUP } from 'constants/routes';
+import { FORGOT_PASSWORD, SIGNUP , HOME } from 'constants/routes';
 import { Field, Form, Formik } from 'formik';
 import { useDocumentTitle, useScrollTop } from 'hooks';
 import PropType from 'prop-types';
@@ -60,6 +60,16 @@ const SignIn = ({ history }) => {
     dispatch(setAuthStatus(null));
     dispatch(setAuthenticating(false));
   }, []);
+
+  useEffect(() => {
+    if(authStatus && authStatus.success){
+      history.push(HOME);
+    }
+    return () => {
+      //console.log(authStatus)
+    }
+  }, [authStatus])
+
 
   const onSignUp = () => history.push(SIGNUP);
 
